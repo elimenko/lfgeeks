@@ -2,7 +2,14 @@ import { type NextPage } from "next";
 import Head from "next/head";
 import { signIn, signOut, useSession } from "next-auth/react";
 
-import { api, RouterOutputs } from "~/utils/api";
+import { api } from "~/utils/api";
+import type { RouterOutputs } from "~/utils/api";
+
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+import Image from "next/image";
+
+dayjs.extend(relativeTime);
 
 const CreateEventForm: React.FC = () => {
 
@@ -10,14 +17,18 @@ const CreateEventForm: React.FC = () => {
 
   if (!sessionData?.user) return null;
 
-  return <div className="flex gap-4 w-full">
-    <img
-      className="w-24 h-24 rounded-full"
-      src={sessionData.user.image || undefined}
-      alt="Profile image"
-    />
-    <input placeholder="Create an event..." className="bg-transparent outline-none grow" />
-  </div>
+  return (
+    <div className="flex gap-4 w-full">
+      <Image
+        className="w-24 h-24 rounded-full"
+        src={sessionData.user.image || ''}
+        alt="Profile image"
+        width={56}
+        height={56}
+      />
+      <input placeholder="Create an event..." className="bg-transparent outline-none grow" />
+    </div>
+  );
 }
 
 type EventWithUser = RouterOutputs["events"]["getAll"][number];
@@ -25,14 +36,22 @@ type EventWithUser = RouterOutputs["events"]["getAll"][number];
 const EventCard = (event: EventWithUser) => {
   return (
     <div
-      className="p-8 border-b border-slate-400 flex justify-between items-center"
+      className="p-8 border-b border-slate-400 flex gap-8 items-center"
     >
-      <div>{event.title}</div>
-      <img
+      <Image
         className="w-12 h-12 rounded-full"
-        src={event.author.image || undefined}
+        src={event.author.image || ''}
         alt="Profile image"
+        width={56}
+        height={56}
       />
+      <div className="flex flex-col">
+        <div className="flex text-slate-300">
+          <span>{event.author.name}</span>
+          <span className="font-thin">&nbsp;{`· ${dayjs(event.createdAt).fromNow()}`}</span>
+        </div>
+        <div>{event.title}</div>
+      </div>
     </div>
   )
 }

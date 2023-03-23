@@ -8,6 +8,11 @@ import {
 
 export const eventsRouter = createTRPCRouter({
   getAll: publicProcedure.query(({ ctx }) => {
-    return ctx.prisma.event.findMany();
+    return ctx.prisma.event.findMany({
+      take: 100,
+      include: {
+        author: true,
+      }
+    });
   }),
 });

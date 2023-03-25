@@ -8,6 +8,8 @@ import type { RouterOutputs } from "~/utils/api";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import Image from "next/image";
+import { LoadingPage } from "~/components/Loading";
+import { LoadingSpinner } from '../components/Loading';
 
 dayjs.extend(relativeTime);
 
@@ -56,12 +58,28 @@ const EventCard = (event: EventWithUser) => {
   )
 }
 
+const Events: React.FC = () => {
+  const { data, isLoading: areEventsLoading } = api.events.getAll.useQuery();
+
+  if (areEventsLoading) return <LoadingSpinner className="h-full" />;
+
+  if (!data) return <div>Something went wrong</div>;
+
+  return (
+    <div className="flex flex-col">
+      {[...data, ...data].map((event) => (
+        <EventCard key={event.id} {...event} />
+      ))}
+    </div>
+  )
+}
+
 const Home: NextPage = () => {
-  const { data, isLoading } = api.events.getAll.useQuery();
+  const { status: sessionStatus } = useSession();
 
-  if (isLoading) return <div>Loading...</div>;
+  api.events.getAll.useQuery();
 
-  if (!data) return <div>Something went wrong...</div>;
+  if (sessionStatus === 'loading') return <div />;
 
   return (
     <>
@@ -71,15 +89,11 @@ const Home: NextPage = () => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <main className="flex justify-center h-screen">
-        <div className="w-full h-full md:max-w-2xl border-x border-slate-200">
+        <div className="flex flex-col w-full h-full md:max-w-2xl border-x border-slate-200">
           <div className="border-b border-slate-400 p-4">
             <AuthShowcase />
           </div>
-          <div className="flex flex-col">
-            {[...data, ...data].map((event) => (
-              <EventCard key={event.id} {...event} />
-            ))}
-          </div>
+          <Events />
         </div>
       </main>
     </>
@@ -93,14 +107,14 @@ const AuthShowcase: React.FC = () => {
 
   return (
     <div className="flex flex-col items-center justify-center gap-4">
-      <p className="text-center text-2xl text-white">
+      <div className="text-center text-2xl text-white">
         {sessionData && sessionData.user &&
           <div className="flex justify-between items-center gap-8">
             <CreateEventForm />
             <span>Logged in as {sessionData.user.name}</span>
           </div>
           }
-      </p>
+      </div>
       <button
         className="rounded-full bg-white/10 px-10 py-3 font-semibold text-white no-underline transition hover:bg-white/20"
         onClick={sessionData ? () => void signOut() : () => void signIn()}

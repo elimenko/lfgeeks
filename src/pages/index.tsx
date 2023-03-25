@@ -4,20 +4,30 @@ import { signIn, signOut, useSession } from "next-auth/react";
 
 import { api } from "~/utils/api";
 import type { RouterOutputs } from "~/utils/api";
+import { useState } from 'react';
 
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import Image from "next/image";
-import { LoadingPage } from "~/components/Loading";
 import { LoadingSpinner } from '../components/Loading';
 
 dayjs.extend(relativeTime);
 
 const CreateEventForm: React.FC = () => {
-
   const { data: sessionData } = useSession();
 
+  const [title, setTitle] = useState('');
+
   if (!sessionData?.user) return null;
+
+  const ctx = api.useContext();
+
+  const { mutate, isLoading: isCreatingEvent } = api.events.create.useMutation({
+    onSuccess: () => {
+      setTitle('');
+      void ctx.events.getAll.invalidate();
+    }
+  });
 
   return (
     <div className="flex gap-4 w-full">
@@ -28,7 +38,20 @@ const CreateEventForm: React.FC = () => {
         width={56}
         height={56}
       />
-      <input placeholder="Create an event..." className="bg-transparent outline-none grow" />
+      <input
+        placeholder="Create an event..."
+        className="bg-transparent outline-none grow"
+        type="text"
+        onChange={(event) => setTitle(event.currentTarget.value)}
+        value={title}
+        disabled={isCreatingEvent}
+      />
+      <button
+        className="rounded-full bg-white/10 px-10 py-3 font-semibold text-white no-underline transition hover:bg-white/20"
+        onClick={() => { mutate({ title }); }}
+      >
+        Create
+      </button>
     </div>
   );
 }
@@ -52,7 +75,7 @@ const EventCard = (event: EventWithUser) => {
           <span>{event.author.name}</span>
           <span className="font-thin">&nbsp;{`· ${dayjs(event.createdAt).fromNow()}`}</span>
         </div>
-        <div>{event.title}</div>
+        <div className="text-xl">{event.title}</div>
       </div>
     </div>
   )
@@ -67,7 +90,7 @@ const Events: React.FC = () => {
 
   return (
     <div className="flex flex-col">
-      {[...data, ...data].map((event) => (
+      {data.map((event) => (
         <EventCard key={event.id} {...event} />
       ))}
     </div>
@@ -93,6 +116,9 @@ const Home: NextPage = () => {
           <div className="border-b border-slate-400 p-4">
             <AuthShowcase />
           </div>
+          <div className="border-b border-slate-400 p-4">
+            <CreateEventForm />
+          </div>
           <Events />
         </div>
       </main>
@@ -110,7 +136,6 @@ const AuthShowcase: React.FC = () => {
       <div className="text-center text-2xl text-white">
         {sessionData && sessionData.user &&
           <div className="flex justify-between items-center gap-8">
-            <CreateEventForm />
             <span>Logged in as {sessionData.user.name}</span>
           </div>
           }

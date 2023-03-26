@@ -11,6 +11,7 @@ import relativeTime from "dayjs/plugin/relativeTime";
 import Image from "next/image";
 import { LoadingSpinner } from '../components/Loading';
 import { toast } from "react-hot-toast";
+import Link from "next/link";
 
 dayjs.extend(relativeTime);
 
@@ -86,8 +87,12 @@ const EventCard = (event: EventWithUser) => {
       />
       <div className="flex flex-col">
         <div className="flex text-slate-300">
-          <span>{event.author.name}</span>
-          <span className="font-thin">&nbsp;{`· ${dayjs(event.createdAt).fromNow()}`}</span>
+          <Link href={`/${event.author.name}`}>
+            <span>{event.author.name}</span>
+          </Link>
+          <Link href={`/event/${event.id}`}>
+            <span className="font-thin">&nbsp;{`· ${dayjs(event.createdAt).fromNow()}`}</span>
+          </Link>
         </div>
         <div className="text-xl">{event.title}</div>
       </div>

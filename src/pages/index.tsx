@@ -10,6 +10,7 @@ import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import Image from "next/image";
 import { LoadingSpinner } from '../components/Loading';
+import { toast } from "react-hot-toast";
 
 dayjs.extend(relativeTime);
 
@@ -26,6 +27,15 @@ const CreateEventForm: React.FC = () => {
     onSuccess: () => {
       setTitle('');
       void ctx.events.getAll.invalidate();
+    },
+    onError: (error) => {
+      const errorMessage = error.data?.zodError?.fieldErrors.title;
+
+      if (errorMessage && errorMessage[0]) {
+        toast.error(errorMessage[0]);
+      } else {
+        toast.error('Failed to create event! Please try again later.');
+      }
     }
   });
 
@@ -46,12 +56,16 @@ const CreateEventForm: React.FC = () => {
         value={title}
         disabled={isCreatingEvent}
       />
-      <button
-        className="rounded-full bg-white/10 px-10 py-3 font-semibold text-white no-underline transition hover:bg-white/20"
-        onClick={() => { mutate({ title }); }}
-      >
-        Create
-      </button>
+      {title !== '' && !isCreatingEvent && (
+        <button
+          className="rounded-full bg-white/10 px-10 py-3 font-semibold text-white no-underline transition hover:bg-white/20"
+          onClick={() => { mutate({ title }); }}
+          disabled={isCreatingEvent}
+        >
+          Create
+        </button>
+      )}
+      {isCreatingEvent && (<LoadingSpinner size="small" />)}
     </div>
   );
 }
@@ -84,7 +98,7 @@ const EventCard = (event: EventWithUser) => {
 const Events: React.FC = () => {
   const { data, isLoading: areEventsLoading } = api.events.getAll.useQuery();
 
-  if (areEventsLoading) return <LoadingSpinner className="h-full" />;
+  if (areEventsLoading) return <LoadingSpinner className="h-full grow" />;
 
   if (!data) return <div>Something went wrong</div>;
 

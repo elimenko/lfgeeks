@@ -33,7 +33,7 @@ export const eventsRouter = createTRPCRouter({
 
   create: protectedProcedure.input(
     z.object({
-      title: z.string().min(1).max(100),
+      title: z.string().min(1).max(100, "Event title is too long"),
     })
   ).mutation(async ({ ctx, input }) => {
     const { title } = input;
